@@ -100,6 +100,9 @@ def generate_launch_description():
     )
     robot_description = {"robot_description": _robot_description_xml}
 
+    # publish robot_description topic
+    publish_robot_description = {"publish_robot_description": True}
+
     # SRDF
     _robot_description_semantic_xml = Command(
         [
@@ -124,6 +127,9 @@ def generate_launch_description():
         "robot_description_semantic": _robot_description_semantic_xml
     }
 
+    # publish robot_description_semantic topic
+    publish_robot_description_semantic = {"publish_robot_description_semantic": True}
+
     # Kinematics
     _robot_description_kinematics_yaml = load_yaml(
         moveit_config_package, path.join("config", "kinematics.yaml")
@@ -131,6 +137,8 @@ def generate_launch_description():
     robot_description_kinematics = {
         "robot_description_kinematics": _robot_description_kinematics_yaml
     }
+
+    publish_robot_description_kinematics = {"publish_robot_description_kinematics": True}
 
     # Joint limits
     joint_limits = {
@@ -218,7 +226,7 @@ def generate_launch_description():
                 {
                     "publish_frequency": 50.0,
                     "frame_prefix": "",
-                    "use_sim_time": use_sim_time,
+                    "use_sim_time": True,
                 },
             ],
         ),
@@ -231,7 +239,7 @@ def generate_launch_description():
             parameters=[
                 robot_description,
                 controller_parameters,
-                {"use_sim_time": use_sim_time},
+                {"use_sim_time": True},
             ],
             condition=(
                 IfCondition(
@@ -262,7 +270,10 @@ def generate_launch_description():
                 trajectory_execution,
                 planning_scene_monitor_parameters,
                 moveit_controller_manager,
-                {"use_sim_time": use_sim_time},
+                publish_robot_description,
+                publish_robot_description_semantic,  
+                publish_robot_description_kinematics, 
+                {"use_sim_time": True},
             ],
         ),
         # move_servo
@@ -280,7 +291,7 @@ def generate_launch_description():
                 trajectory_execution,
                 planning_scene_monitor_parameters,
                 servo_params,
-                {"use_sim_time": use_sim_time},
+                {"use_sim_time": True},
             ],
             condition=IfCondition(enable_servo),
         ),
@@ -302,10 +313,11 @@ def generate_launch_description():
                 robot_description_kinematics,
                 planning_pipeline,
                 joint_limits,
-                {"use_sim_time": use_sim_time},
+                {"use_sim_time": True},
             ],
             condition=IfCondition(enable_rviz),
         ),
+        
     ]
 
     # Add nodes for loading controllers
@@ -319,7 +331,7 @@ def generate_launch_description():
                 executable="spawner",
                 output="log",
                 arguments=[controller, "--ros-args", "--log-level", log_level],
-                parameters=[{"use_sim_time": use_sim_time}],
+                parameters=[{"use_sim_time": True}],
             ),
         )
 
@@ -439,12 +451,12 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         # Servo
         DeclareLaunchArgument(
             "enable_servo",
-            default_value="true",
+            default_value="false",
             description="Flag to enable MoveIt2 Servo for manipulator.",
         ),
         # Miscellaneous
         DeclareLaunchArgument(
-            "enable_rviz", default_value="true", description="Flag to enable RViz2."
+            "enable_rviz", default_value="false", description="Flag to enable RViz2."
         ),
         DeclareLaunchArgument(
             "rviz_config",
@@ -457,7 +469,7 @@ def generate_declared_arguments() -> List[DeclareLaunchArgument]:
         ),
         DeclareLaunchArgument(
             "use_sim_time",
-            default_value="false",
+            default_value="true",
             description="If true, use simulated clock.",
         ),
         DeclareLaunchArgument(
